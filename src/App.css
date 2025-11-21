@@ -171,3 +171,20 @@
     background-color: var(--color-accent);
     color: #1a120b;
 }
+
+.product-card {
+    cursor: pointer;
+}
+
+.product-card:hover .card-image {
+    transform: scale(1.05);
+}
+
+.card-image {
+    transition: transform 0.5s ease;
+}
+
+/* Добавим hover подсветку для ясности */
+.product-card:hover {
+    border: 1px solid rgba(212, 163, 115, 0.3);
+}

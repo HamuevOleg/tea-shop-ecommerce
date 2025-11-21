@@ -2,13 +2,23 @@ import { useState } from 'react';
 import './App.css';
 import { products } from './data';
 import type {Product} from './types';
+import ProductModal from './components/ProductModal';
 
 function App() {
     const [cartCount, setCartCount] = useState(0);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
     const handleAddToCart = (product: Product) => {
         setCartCount(prev => prev + 1);
         console.log(`Added ${product.name} to cart`);
+    };
+
+    const handleProductClick = (product: Product) => {
+        setSelectedProduct(product);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedProduct(null);
     };
 
     return (
@@ -19,7 +29,7 @@ function App() {
                     <div className="logo">Zen Pu-erh</div>
                     <nav>
                         <button className="cart-btn">
-                            Cart ({cartCount})
+                            🛒 Cart ({cartCount})
                         </button>
                     </nav>
                 </header>
@@ -38,7 +48,11 @@ function App() {
                     <h2 className="section-title">Curated Selection</h2>
                     <div className="products-grid">
                         {products.map((product) => (
-                            <div key={product.id} className="product-card">
+                            <div
+                                key={product.id}
+                                className="product-card"
+                                onClick={() => handleProductClick(product)}
+                            >
                                 <img src={product.imageUrl} alt={product.name} className="card-image" />
                                 <div className="card-content">
                                     <span className="card-category">{product.category}</span>
@@ -50,7 +64,10 @@ function App() {
                                         <span className="price">${product.price.toFixed(2)}</span>
                                         <button
                                             className="add-btn"
-                                            onClick={() => handleAddToCart(product)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCart(product);
+                                            }}
                                         >
                                             Add to Cart
                                         </button>
@@ -66,6 +83,15 @@ function App() {
                     <p>&copy; 2025 Zen Pu-erh Shop. All rights reserved.</p>
                 </footer>
             </div>
+
+            {/* Modal */}
+            {selectedProduct && (
+                <ProductModal
+                    product={selectedProduct}
+                    onClose={handleCloseModal}
+                    onAddToCart={handleAddToCart}
+                />
+            )}
         </div>
     );
 }
