@@ -17,7 +17,7 @@ export const products: Product[] = [
         price: 120.50,
         year: 2012,
         description: "Harvested from 300-year-old trees. Intense energy (Cha Qi) and floral finish.",
-        imageUrl: "https://images.unsplash.com/photo-1624209324637-667d08159d63?auto=format&fit=crop&q=80&w=600"
+        imageUrl: "https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         id: 3,
