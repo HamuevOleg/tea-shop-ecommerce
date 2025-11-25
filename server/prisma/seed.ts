@@ -25,7 +25,7 @@ async function main() {
                 price: 12.50,
                 stock: 100,
                 categoryId: blackTea.id,
-                imageUrl: 'https://images.unsplash.com/photo-1564890369478-c5f3a8549a95?auto=format&fit=crop&w=800&q=80'
+                imageUrl: 'https://www.thewhistlingkettle.com/cdn/shop/files/EarlGreyDisplayPhoto01.jpg?v=1726087929&width=1024'
             },
             {
                 title: 'Jasmine Green',
