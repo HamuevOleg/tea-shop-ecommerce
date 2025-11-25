@@ -1,190 +1,151 @@
-/* Layout */
-.container {
+/* client/src/App.css */
+:root {
+    --primary: #10b981;       /* Изумрудный зеленый */
+    --primary-dark: #059669;  /* Темный изумруд */
+    --bg-color: #f3f4f6;      /* Светло-серый фон */
+    --card-bg: #ffffff;
+    --text-main: #1f2937;
+    --text-secondary: #6b7280;
+    --radius: 12px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* --- Layout --- */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
-}
-
-/* Header */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.logo {
-    font-size: 1.8rem;
-    letter-spacing: 2px;
-    color: var(--color-accent);
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.cart-btn {
-    background: transparent;
-    color: var(--color-text-main);
-    border: 1px solid var(--color-text-muted);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-}
-
-.cart-btn:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-}
-
-/* Hero Section */
-.hero {
-    text-align: center;
-    padding: 6rem 0;
-    background: linear-gradient(rgba(26, 18, 11, 0.8), rgba(26, 18, 11, 0.8)), url('https://images.unsplash.com/photo-1523906630133-f6934a1ab2b9?auto=format&fit=crop&q=80&w=1920');
-    background-size: cover;
-    background-position: center;
-    border-radius: 0 0 20px 20px;
-    margin-bottom: 4rem;
-}
-
-.hero h1 {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-    color: var(--color-text-main);
-}
-
-.hero p {
-    font-size: 1.2rem;
-    color: var(--color-text-muted);
-    max-width: 600px;
-    margin: 0 auto 2rem;
-}
-
-.cta-button {
-    background-color: var(--color-accent);
-    color: #1a120b;
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 50px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.cta-button:hover {
-    background-color: var(--color-accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(212, 163, 115, 0.3);
-}
-
-/* Products Grid */
-.section-title {
-    text-align: center;
-    margin-bottom: 3rem;
-    font-size: 2.5rem;
-    color: var(--color-accent);
-}
-
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-    padding-bottom: 4rem;
-}
-
-/* Product Card */
-.product-card {
-    background-color: var(--color-card);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-}
-
-.card-image {
-    height: 250px;
     width: 100%;
-    object-fit: cover;
+    box-sizing: border-box;
 }
 
-.card-content {
-    padding: 1.5rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+/* --- Typography --- */
+h1, h2, h3 {
+    margin: 0;
+    font-weight: 700;
+    color: #111827;
 }
 
-.card-category {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-text-muted);
-    margin-bottom: 0.5rem;
-}
+h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
 
-.card-title {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
-    color: var(--color-text-main);
-}
-
-.card-year {
-    font-style: italic;
-    color: var(--color-accent);
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.card-desc {
-    font-size: 0.9rem;
-    color: #ccc;
-    margin-bottom: 1.5rem;
-    flex-grow: 1;
-}
-
-.card-footer {
+/* --- Components: Navbar --- */
+.navbar {
+    background: var(--card-bg);
+    padding: 1rem 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.price {
-    font-size: 1.3rem;
+.nav-brand {
+    font-size: 1.5rem;
     font-weight: bold;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.add-btn {
-    background-color: transparent;
-    border: 1px solid var(--color-accent);
-    color: var(--color-accent);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.add-btn:hover {
-    background-color: var(--color-accent);
-    color: #1a120b;
+.user-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
-.product-card {
+/* --- Components: Cards --- */
+.auth-card {
+    background: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 400px;
+    margin: 4rem auto;
+    text-align: center;
+}
+
+/* --- Components: Forms & Buttons --- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    background: #f9fafb;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
 }
 
-.product-card:hover .card-image {
-    transform: scale(1.05);
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
 }
 
-.card-image {
-    transition: transform 0.5s ease;
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
 }
 
-/* Добавим hover подсветку для ясности */
-.product-card:hover {
-    border: 1px solid rgba(212, 163, 115, 0.3);
+.btn-outline {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    color: var(--text-main);
+}
+
+.btn-outline:hover {
+    background: #f3f4f6;
+}
+
+.btn-link {
+    background: none;
+    color: var(--primary);
+    text-decoration: underline;
+    padding: 0;
+    font-size: 0.9rem;
 }
