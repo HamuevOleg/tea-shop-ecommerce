@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import AdminPanel from './AdminPanel';
 import { ProfileModal } from './ProfileModal';
+import AdminPanel from './AdminPanel'; // <--- Импортируем админку
+import './Navbar.css';
 
 interface NavbarProps {
     onOpenAuth: () => void;
@@ -11,66 +12,94 @@ interface NavbarProps {
 
 export const Navbar = ({ onOpenAuth }: NavbarProps) => {
     const { user, logout } = useAuth();
-    const { openCart } = useCart();
-
-    // States for modals
-    const [isAdminOpen, setIsAdminOpen] = useState(false);
+    const { totalItems, openCart } = useCart();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+    // Состояние для открытия админки
+    const [isAdminOpen, setIsAdminOpen] = useState(false);
 
     return (
         <>
             <nav className="navbar">
-                <div className="navbar-logo">YunnanSoul</div>
-                <div className="navbar-links">
+                <div className="navbar-brand">
+                    <span className="brand-title">
+                        <span className="accent">Yunnan</span>Soul
+                    </span>
+                    <span className="brand-subtitle">
+                        雲南之魂
+                    </span>
+                </div>
 
-                    {/* Admin Panel Button (Only for ADMIN role) */}
-                    {user?.role === 'ADMIN' && (
-                        <button
-                            className="nav-btn admin-btn"
-                            onClick={() => setIsAdminOpen(true)}
-                            style={{ color: '#ff7875', borderColor: '#ff7875', marginRight: '10px' }}
-                        >
-                            Admin Panel
-                        </button>
-                    )}
-
-                    <button className="nav-btn" onClick={openCart}>
-                        Cart
+                <div className="navbar-actions">
+                    <button
+                        onClick={openCart}
+                        className="cart-btn"
+                        title="Open Cart"
+                    >
+                        🛒
+                        {totalItems > 0 && (
+                            <span className="cart-badge">
+                                {totalItems}
+                            </span>
+                        )}
                     </button>
 
                     {user ? (
-                        <div className="user-menu">
+                        <div className="user-actions">
+                            {/* КНОПКА АДМИНКИ: Показываем только если роль ADMIN */}
+                            {user.role === 'ADMIN' && (
+                                <button
+                                    onClick={() => setIsAdminOpen(true)}
+                                    className="admin-launch-btn"
+                                >
+                                    Admin Panel
+                                </button>
+                            )}
+
                             <button
-                                className="nav-btn username-btn"
                                 onClick={() => setIsProfileOpen(true)}
-                                style={{ fontWeight: 'bold', textDecoration: 'underline', border: 'none' }}
+                                className="profile-link"
                             >
                                 {user.email}
                             </button>
-
-                            <button className="nav-btn logout" onClick={logout}>Exit</button>
+                            <button
+                                onClick={logout}
+                                className="logout-btn"
+                            >
+                                Sign Out
+                            </button>
                         </div>
                     ) : (
-                        <button className="nav-btn" onClick={onOpenAuth}>
-                            Login
+                        <button
+                            onClick={onOpenAuth}
+                            className="btn-primary" // Убедись, что этот класс есть в App.css или добавь стиль ниже
+                            style={{
+                                padding: '8px 16px',
+                                background: 'var(--color-accent)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Sign In
                         </button>
                     )}
                 </div>
             </nav>
 
-            {/* Modals */}
-            <AdminPanel
-                isOpen={isAdminOpen}
-                onClose={() => setIsAdminOpen(false)}
-            />
-
+            {/* Модальные окна */}
             <ProfileModal
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
                 onSuccess={() => setIsProfileOpen(false)}
             />
+
+            {/* Рендерим админку */}
+            <AdminPanel
+                isOpen={isAdminOpen}
+                onClose={() => setIsAdminOpen(false)}
+            />
         </>
     );
 };
-
-export default Navbar;

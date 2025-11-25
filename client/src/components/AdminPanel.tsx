@@ -1,7 +1,7 @@
 // client/src/components/AdminPanel.tsx
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Product, Category, Order } from '../types';
+import type {Product, Category, Order} from '../types';
 import './AdminPanel.css';
 
 interface AdminPanelProps {

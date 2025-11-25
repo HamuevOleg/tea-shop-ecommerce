@@ -1,10 +1,18 @@
+// server/src/controller/auth.controller.ts
 import { Elysia, t } from 'elysia'
+import { jwt } from '@elysiajs/jwt'
 import { PrismaClient } from '@prisma/client'
 import { password as bunPassword } from 'bun'
 
 const db = new PrismaClient()
 
 export const authController = new Elysia({ prefix: '/auth' })
+    .use(
+        jwt({
+            name: 'jwt',
+            secret: process.env.JWT_SECRET || 'secret' // Убедись, что секрет совпадает везде
+        })
+    )
     .post('/register', async ({ body, set }) => {
         const { email, password } = body
 
@@ -16,7 +24,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         const hashedPassword = await bunPassword.hash(password)
 
-        const user = await db.user.create({
+        await db.user.create({
             data: {
                 email,
                 password: hashedPassword
@@ -31,7 +39,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         })
     })
 
-    .post('/login', async ({ body, set }) => {
+    .post('/login', async ({ body, set, jwt }) => { // Добавляем jwt в параметры
         const { email, password } = body
 
         const user = await db.user.findUnique({ where: { email } })
@@ -46,7 +54,12 @@ export const authController = new Elysia({ prefix: '/auth' })
             return { message: 'Invalid credentials' }
         }
 
-        const token = 'fake-jwt-token-' + user.id
+        // ИСПРАВЛЕНИЕ: Генерируем НАСТОЯЩИЙ токен
+        const token = await jwt.sign({
+            id: user.id,
+            email: user.email,
+            role: user.role
+        })
 
         const { password: _, ...userWithoutPassword } = user
 

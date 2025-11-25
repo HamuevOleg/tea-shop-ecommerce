@@ -11,7 +11,7 @@ export const orderController = new Elysia()
         })
     )
 
-    // GET all orders (for admin)
+    // 1. GET all orders (for admin)
     .get('/orders', async ({ set }) => {
         try {
             const orders = await db.order.findMany({
@@ -42,7 +42,50 @@ export const orderController = new Elysia()
         }
     })
 
-    // UPDATE order status (Admin only)
+    // 2. GET my orders (НОВОЕ: История заказов пользователя)
+    .get('/orders/my', async ({ jwt, set, headers }) => {
+        const authHeader = headers['authorization']
+        if (!authHeader) {
+            set.status = 401
+            return { success: false, message: 'Unauthorized' }
+        }
+
+        const token = authHeader.split(' ')[1]
+        const profile = await jwt.verify(token)
+
+        if (!profile) {
+            set.status = 401
+            return { success: false, message: 'Invalid token' }
+        }
+
+        const userId = (profile as any).id
+
+        try {
+            const orders = await db.order.findMany({
+                where: {
+                    userId: Number(userId)
+                },
+                include: {
+                    items: {
+                        include: {
+                            product: true
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            })
+
+            return orders
+        } catch (error) {
+            console.error('Error fetching my orders:', error)
+            set.status = 500
+            return { success: false, message: 'Failed to fetch your orders' }
+        }
+    })
+
+    // 3. UPDATE order status (Admin only)
     .patch('/orders/:id', async ({ params: { id }, body, set }) => {
         try {
             const order = await db.order.update({
@@ -64,7 +107,7 @@ export const orderController = new Elysia()
         })
     })
 
-    // CREATE new order
+    // 4. CREATE new order
     .post('/orders', async ({ body, jwt, set, headers }) => {
         const authHeader = headers['authorization']
         if (!authHeader) {

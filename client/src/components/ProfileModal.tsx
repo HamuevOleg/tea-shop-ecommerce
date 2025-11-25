@@ -1,209 +1,293 @@
 // client/src/components/ProfileModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../api';
+import type { Order } from '../types';
 import './ProfileModal.css';
 
 interface ProfileModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const { user, updateUser } = useAuth();
 
-    // Основные поля
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [deliveryMethod, setDeliveryMethod] = useState<'COURIER' | 'POST'>('COURIER');
+    // Tabs: 'profile' or 'history'
+    const [activeTab, setActiveTab] = useState<'profile' | 'history'>('profile');
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
-    // Поля адреса (разбиты)
-    const [city, setCity] = useState('');
-    const [street, setStreet] = useState('');
-    const [houseNumber, setHouseNumber] = useState('');
-    const [postalCode, setPostalCode] = useState('');
+    // Form data
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        idnp: '',
+        address: '',
+        deliveryMethod: 'COURIER',
+        avatarUrl: ''
+    });
 
-    const [loading, setLoading] = useState(false);
-
-    // Заполняем данные при открытии модалки
     useEffect(() => {
         if (isOpen && user) {
-            setName(user.name || '');
-            setPhone(user.phone || '');
-            setDeliveryMethod((user.deliveryMethod as 'COURIER' | 'POST') || 'COURIER');
-
-            // Логика разбора адреса: "Город, Улица, Дом"
-            if (user.address) {
-                const parts = user.address.split(',').map(s => s.trim());
-                if (parts.length >= 3) {
-                    setCity(parts[0]);
-                    setStreet(parts[1]);
-                    setHouseNumber(parts.slice(2).join(', '));
-                } else if (parts.length === 1 && /^\d+$/.test(parts[0])) {
-                    // Если это просто число, значит это почтовый индекс
-                    setPostalCode(parts[0]);
-                } else {
-                    setStreet(user.address);
-                }
-            }
+            setFormData({
+                name: user.name || '',
+                phone: user.phone || '',
+                idnp: user.idnp || '',
+                address: user.address || '',
+                deliveryMethod: user.deliveryMethod || 'COURIER',
+                avatarUrl: user.avatarUrl || ''
+            });
+            setActiveTab('profile');
         }
     }, [isOpen, user]);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (isOpen && activeTab === 'history') {
+            fetchHistory();
+        }
+    }, [isOpen, activeTab]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
+    const fetchHistory = async () => {
+        setLoadingHistory(true);
         try {
-            // Склеиваем адрес в зависимости от метода доставки
-            const fullAddress = deliveryMethod === 'POST'
-                ? postalCode
-                : `${city}, ${street}, ${houseNumber}`;
-
-            await updateUser({
-                name,
-                phone,
-                deliveryMethod,
-                address: fullAddress
-            });
-            onSuccess();
+            const { data } = await api.get<Order[]>('/orders/my');
+            setOrders(data);
         } catch (error) {
-            console.error(error);
-            alert('Failed to update profile');
+            console.error("Failed to load history", error);
         } finally {
-            setLoading(false);
+            setLoadingHistory(false);
         }
     };
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await updateUser(formData);
+            alert('Profile updated successfully!');
+            if (onSuccess) onSuccess();
+            else onClose();
+        } catch (error) {
+            console.error('Failed to update profile', error);
+        }
+    };
+
+    const handleOverlayClick = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
     return (
-        <div className="profile-modal-overlay" onClick={onClose}>
+        <div className="profile-modal-overlay" onClick={handleOverlayClick}>
             <div className="profile-modal-content" onClick={e => e.stopPropagation()}>
+
                 <div className="profile-modal-header">
-                    <h2>Complete Your Profile</h2>
-                    <button className="profile-close-btn" onClick={onClose}>×</button>
+                    <h2>My Profile</h2>
+                    <button
+                        className="profile-close-btn"
+                        onClick={onClose}
+                        type="button"
+                        aria-label="Close modal"
+                    >
+                        ×
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="profile-form">
-                    {/* Personal Info Section */}
-                    <div className="form-section">
-                        <h3 className="section-label">Personal Information</h3>
+                <div className="profile-tabs">
+                    <button
+                        className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('profile')}
+                        type="button"
+                    >
+                        My Details
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('history')}
+                        type="button"
+                    >
+                        Order History
+                    </button>
+                </div>
 
-                        <div className="form-group">
-                            <label>Full Name</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                placeholder="e.g. John Doe"
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Phone Number</label>
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                placeholder="+1 234 567 890"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Delivery Method Selection - moved before address */}
-                    <div className="form-section">
-                        <h3 className="section-label">Delivery Method</h3>
-                        <div className="delivery-options">
-                            <label className={`delivery-option ${deliveryMethod === 'COURIER' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="delivery"
-                                    value="COURIER"
-                                    checked={deliveryMethod === 'COURIER'}
-                                    onChange={() => setDeliveryMethod('COURIER')}
-                                />
-                                <span className="option-title">Courier Delivery</span>
-                                <span className="option-desc">Directly to your door</span>
-                            </label>
-
-                            <label className={`delivery-option ${deliveryMethod === 'POST' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="delivery"
-                                    value="POST"
-                                    checked={deliveryMethod === 'POST'}
-                                    onChange={() => setDeliveryMethod('POST')}
-                                />
-                                <span className="option-title">Post Office</span>
-                                <span className="option-desc">Pickup at nearest point</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Delivery Section - conditional rendering */}
-                    <div className="form-section">
-                        <h3 className="section-label">Delivery Address</h3>
-
-                        {deliveryMethod === 'COURIER' ? (
-                            <>
-                                <div className="form-row">
-                                    <div className="form-group city-group">
-                                        <label>City</label>
-                                        <input
-                                            type="text"
-                                            value={city}
-                                            onChange={e => setCity(e.target.value)}
-                                            placeholder="Chisinau"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="form-row">
-                                    <div className="form-group street-group">
-                                        <label>Street / Address</label>
-                                        <input
-                                            type="text"
-                                            value={street}
-                                            onChange={e => setStreet(e.target.value)}
-                                            placeholder="Broadway Ave"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group house-group">
-                                        <label>House / Apt</label>
-                                        <input
-                                            type="text"
-                                            value={houseNumber}
-                                            onChange={e => setHouseNumber(e.target.value)}
-                                            placeholder="42B"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
+                <div className="profile-modal-body">
+                    {activeTab === 'profile' ? (
+                        <form onSubmit={handleSubmit} className="profile-form">
                             <div className="form-group">
-                                <label>Postal Code</label>
+                                <label htmlFor="email">Email Address</label>
                                 <input
-                                    type="text"
-                                    value={postalCode}
-                                    onChange={e => setPostalCode(e.target.value)}
-                                    placeholder="e.g. MD-2001"
+                                    id="email"
+                                    type="email"
+                                    value={user?.email || ''}
+                                    disabled
+                                    style={{opacity: 0.6}}
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="name">Full Name</label>
+                                    <input
+                                        id="name"
+                                        name="name"
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="John Doe"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="phone">Phone Number</label>
+                                    <input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        placeholder="+373..."
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="address">Delivery Address</label>
+                                <textarea
+                                    id="address"
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    placeholder="City, Street, Building..."
                                     required
                                 />
                             </div>
-                        )}
-                    </div>
 
-                    <div className="form-actions">
-                        <button type="submit" className="btn-save" disabled={loading}>
-                            {loading ? 'Saving...' : 'Save & Continue to Payment'}
-                        </button>
-                    </div>
-                </form>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Delivery Method</label>
+                                    <div className="delivery-method-group">
+                                        <label className={`delivery-radio-option ${formData.deliveryMethod === 'COURIER' ? 'active' : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="deliveryMethod"
+                                                value="COURIER"
+                                                checked={formData.deliveryMethod === 'COURIER'}
+                                                onChange={handleChange}
+                                            />
+                                            <span className="delivery-radio-title">Courier</span>
+                                            <span className="delivery-radio-desc">To your door</span>
+                                        </label>
+
+                                        <label className={`delivery-radio-option ${formData.deliveryMethod === 'POST' ? 'active' : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="deliveryMethod"
+                                                value="POST"
+                                                checked={formData.deliveryMethod === 'POST'}
+                                                onChange={handleChange}
+                                            />
+                                            <span className="delivery-radio-title">Post Office</span>
+                                            <span className="delivery-radio-desc">Pickup point</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="idnp">ID Code (Optional)</label>
+                                    <input
+                                        id="idnp"
+                                        name="idnp"
+                                        type="text"
+                                        value={formData.idnp}
+                                        onChange={handleChange}
+                                        placeholder="For post office..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="profile-modal-actions">
+                                <button type="submit" className="btn-save">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <div className="history-list">
+                            {loadingHistory && (
+                                <p style={{
+                                    color: '#888',
+                                    textAlign: 'center',
+                                    padding: '2rem',
+                                    fontSize: '1rem'
+                                }}>
+                                    Loading history...
+                                </p>
+                            )}
+
+                            {!loadingHistory && orders.length === 0 && (
+                                <p style={{
+                                    color: '#a69080',
+                                    textAlign: 'center',
+                                    padding: '3rem',
+                                    fontSize: '1.1rem'
+                                }}>
+                                    No orders yet 🍵
+                                </p>
+                            )}
+
+                            {orders.map((order, index) => (
+                                <div
+                                    key={order.id}
+                                    className="history-card"
+                                    style={{
+                                        animationDelay: `${index * 0.1}s`
+                                    }}
+                                >
+                                    <div className="history-header">
+                                        <span className="history-date">
+                                            {formatDate(order.createdAt)}
+                                        </span>
+                                        <span className={`history-status status-${order.status}`}>
+                                            {order.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="history-items">
+                                        {order.items?.map(item => (
+                                            <div key={item.id} className="history-item-row">
+                                                <span>{item.product?.title || 'Unknown Product'}</span>
+                                                <span style={{ color: '#888' }}>
+                                                    {item.quantity} × ${Number(item.price).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="history-total">
+                                        <span>Total:</span>
+                                        <span>${Number(order.totalPrice).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
