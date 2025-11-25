@@ -1,3 +1,8 @@
+/* client/src/index.css - Beautiful Typography */
+
+/* Импорт красивых шрифтов из Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+
 :root {
     --color-bg: #1a120b; /* Темный пуэр */
     --color-card: #2c1e16; /* Цвет прессованного блина */
@@ -5,8 +10,10 @@
     --color-text-muted: #a69080;
     --color-accent: #d4a373; /* Золотистый настой */
     --color-accent-hover: #e6b88a;
-    --font-serif: 'Georgia', 'Times New Roman', serif;
-    --font-sans: 'Helvetica Neue', sans-serif;
+
+    /* Красивые шрифты */
+    --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Montserrat', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * {
@@ -21,11 +28,19 @@ body {
     font-family: var(--font-sans);
     line-height: 1.6;
     min-height: 100vh;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
     font-family: var(--font-serif);
-    font-weight: 400;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+h1 {
+    font-weight: 700;
 }
 
 button {
@@ -33,4 +48,14 @@ button {
     border: none;
     outline: none;
     transition: all 0.3s ease;
+    font-family: var(--font-sans);
+}
+
+input {
+    font-family: var(--font-sans);
+}
+
+/* Улучшенная читаемость */
+p {
+    letter-spacing: 0.3px;
 }
