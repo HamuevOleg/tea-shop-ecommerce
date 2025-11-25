@@ -1,9 +1,11 @@
+// server/src/index.ts
 import { Elysia } from 'elysia'
 import { swagger } from '@elysiajs/swagger'
 import { cors } from '@elysiajs/cors'
-import { authController } from './controller/auth.controller.ts'
+import { authController } from './controller/auth.controller'
 import { orderController } from './controller/order.controller'
 import { productController } from './controller/product.controller'
+import { categoryController } from './controller/category.controller' // <--- 1. Импортируем
 
 const app = new Elysia()
     .use(swagger({
@@ -16,14 +18,16 @@ const app = new Elysia()
             tags: [
                 { name: 'Auth', description: 'Authentication' },
                 { name: 'Products', description: 'Product Management' },
-                { name: 'Orders', description: 'Order Processing' }
+                { name: 'Orders', description: 'Order Processing' },
+                { name: 'Categories', description: 'Category Management' } // <--- (Опционально) для документации
             ]
         }
     }))
     .use(cors())
     .use(authController)
-    .use(productController) // <--- Added this line
+    .use(productController)
     .use(orderController)
+    .use(categoryController) // <--- 2. Подключаем контроллер
     .listen(3000)
 
 console.log(

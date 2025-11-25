@@ -1,40 +1,55 @@
-// client/src/App.tsx - Fixed version with proper imports and components
+// client/src/App.tsx
 import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { ProductModal } from './components/ProductModal';
 import { CartModal } from './components/CartModal';
+import TeaStory from './components/TeaStory'; // Убедись, что этот файл создан (код был выше)
 import { useAuth } from './context/AuthContext';
 import { useCart } from './context/CartContext';
 import { api } from './api';
-import type { Product } from './types';
+import type { Product, Category } from './types'; // Добавь Category в types.ts
 import './App.css';
 
 function App() {
+    // --- Состояния данных ---
     const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]); // Состояние для категорий
+
+    // --- Состояния UI ---
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [activeTab, setActiveTab] = useState<'story' | 'store'>('story'); // Вкладки
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null); // Фильтр
+    const [loading, setLoading] = useState(true);
+
+    // --- Авторизация (твоя логика) ---
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(true);
 
     const { user, login, register } = useAuth();
     const { addToCart } = useCart();
 
-    // Загрузка товаров
+    // Загрузка товаров и категорий
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await api.get<Product[]>('/products');
-                setProducts(data);
+                // Загружаем товары и категории параллельно
+                const [productsRes, categoriesRes] = await Promise.all([
+                    api.get<Product[]>('/products'),
+                    api.get<Category[]>('/categories') // Убедись, что такой эндпоинт есть
+                ]);
+
+                setProducts(productsRes.data);
+                setCategories(categoriesRes.data);
             } catch (error) {
-                console.error('Failed to fetch products:', error);
+                console.error('Failed to fetch data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProducts();
+        fetchData();
     }, []);
 
     // Обработка авторизации
@@ -55,7 +70,7 @@ function App() {
         }
     };
 
-    // Обработка клика по кнопке в модалке товара
+    // Клик по кнопке в карточке товара
     const handleProductAction = (product: Product) => {
         if (user) {
             addToCart(product);
@@ -66,62 +81,120 @@ function App() {
         }
     };
 
+    // Логика фильтрации товаров
+    const filteredProducts = selectedCategoryId
+        ? products.filter(p => p.categoryId === selectedCategoryId) // Убедись, что в Product есть поле categoryId
+        : products;
+
     return (
         <div className="app-container">
             <Navbar onOpenAuth={() => setShowAuthModal(true)} />
 
-            {/* Hero Section */}
-            <section className="hero">
-                <h1>YunnanSoul Tea Collection</h1>
-                <p>Discover premium artisan teas sourced directly from ancient tea gardens</p>
-            </section>
+            {/* Переключатель вкладок (Слайдер) */}
+            <div className="view-switcher-container" style={{ marginTop: '80px' }}>
+                <div className="view-switcher">
+                    <button
+                        className={`view-btn ${activeTab === 'story' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('story')}
+                    >
+                        Tea Story
+                    </button>
+                    <button
+                        className={`view-btn ${activeTab === 'store' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('store')}
+                    >
+                        Store
+                    </button>
+                </div>
+            </div>
 
-            {/* Main Content */}
+            {/* Основной контент с условным рендерингом */}
             <main className="main-content">
-                <h2 className="section-title">Curated Selection</h2>
-
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍵</div>
-                        <p>Loading our finest teas...</p>
-                    </div>
-                ) : products.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
-                        <p>No products available at the moment.</p>
-                    </div>
+                {activeTab === 'story' ? (
+                    // --- Вкладка ИСТОРИЯ ---
+                    <TeaStory />
                 ) : (
-                    <div className="product-grid">
-                        {products.map((product) => (
-                            <article key={product.id} className="product-card">
-                                <img
-                                    src={product.imageUrl || 'https://via.placeholder.com/400x300?text=Tea'}
-                                    alt={product.title}
-                                    className="card-image"
-                                    loading="lazy"
-                                />
-                                <div className="card-body">
-                                    <span className="card-category">{product.category.name}</span>
-                                    <h3 className="card-title">{product.title}</h3>
-                                    <p className="card-desc">
-                                        {product.description || 'A premium tea selection from our collection.'}
-                                    </p>
-                                    <div className="card-footer">
-                                        <span className="card-price">${Number(product.price).toFixed(2)}</span>
-                                        <button
-                                            className="btn-primary"
-                                            onClick={() => setSelectedProduct(product)}
-                                        >
-                                            View Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
+                    // --- Вкладка МАГАЗИН ---
+                    <div className="store-section fade-in">
+
+                        {/* Hero секция только для магазина */}
+                        <section className="hero" style={{ marginBottom: '30px' }}>
+                            <h1>YunnanSoul Tea Collection</h1>
+                            <p>Discover premium artisan teas sourced directly from ancient tea gardens</p>
+                        </section>
+
+                        {/* Фильтры категорий */}
+                        <div className="filters-container">
+                            <button
+                                className={`filter-btn ${selectedCategoryId === null ? "active" : ""}`}
+                                onClick={() => setSelectedCategoryId(null)}
+                            >
+                                All
+                            </button>
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat.id}
+                                    className={`filter-btn ${selectedCategoryId === cat.id ? "active" : ""}`}
+                                    onClick={() => setSelectedCategoryId(cat.id)}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Сетка товаров */}
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍵</div>
+                                <p>Loading our finest teas...</p>
+                            </div>
+                        ) : filteredProducts.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-muted)' }}>
+                                <p>No products found in this category.</p>
+                            </div>
+                        ) : (
+                            <div className="product-grid">
+                                {filteredProducts.map((product) => (
+                                    <article key={product.id} className="product-card" onClick={() => setSelectedProduct(product)}>
+                                        <div className="card-image-wrapper">
+                                            <img
+                                                src={product.imageUrl || 'https://via.placeholder.com/400x300?text=Tea'}
+                                                alt={product.title}
+                                                className="card-image"
+                                                loading="lazy"
+                                            />
+                                            {/* Если есть поле stock, можно добавить лейбл */}
+                                            {/* {!product.stock && <div className="out-of-stock-overlay">Out of Stock</div>} */}
+                                        </div>
+                                        <div className="card-body">
+                                            <span className="card-category">
+                                                {/* Если category объект, то .name, если id, то ищем имя */}
+                                                {product.category?.name || categories.find(c => c.id === product.categoryId)?.name || 'Tea'}
+                                            </span>
+                                            <h3 className="card-title">{product.title}</h3>
+                                            <div className="card-footer">
+                                                <span className="card-price">${Number(product.price).toFixed(2)}</span>
+                                                <button
+                                                    className="btn-primary"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedProduct(product);
+                                                    }}
+                                                >
+                                                    View Details
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
 
-            {/* Product Modal */}
+            {/* --- Модальные окна --- */}
+
             {selectedProduct && (
                 <ProductModal
                     product={selectedProduct}
@@ -131,10 +204,9 @@ function App() {
                 />
             )}
 
-            {/* Cart Modal */}
             <CartModal />
 
-            {/* Auth Modal */}
+            {/* Auth Modal (Твой код без изменений) */}
             {showAuthModal && (
                 <div className="auth-overlay" onClick={() => setShowAuthModal(false)}>
                     <div className="auth-modal" onClick={(e) => e.stopPropagation()}>

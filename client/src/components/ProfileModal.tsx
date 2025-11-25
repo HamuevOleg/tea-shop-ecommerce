@@ -155,7 +155,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onS
                                             type="text"
                                             value={city}
                                             onChange={e => setCity(e.target.value)}
-                                            placeholder="New York"
+                                            placeholder="Chisinau"
                                             required
                                         />
                                     </div>
