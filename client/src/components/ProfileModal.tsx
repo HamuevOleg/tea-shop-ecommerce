@@ -1,172 +1,208 @@
 // client/src/components/ProfileModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import type {DeliveryMethod} from '../types';
 import './ProfileModal.css';
 
 interface ProfileModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void; // Вызывается после успешного сохранения
+    onSuccess: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const { user, updateUser } = useAuth();
 
-    const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        idnp: '',
-        address: '',
-        deliveryMethod: 'COURIER' as DeliveryMethod,
-        avatarUrl: ''
-    });
+    // Основные поля
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [deliveryMethod, setDeliveryMethod] = useState<'COURIER' | 'POST'>('COURIER');
 
-    // Заполняем форму данными юзера при открытии
+    // Поля адреса (разбиты)
+    const [city, setCity] = useState('');
+    const [street, setStreet] = useState('');
+    const [houseNumber, setHouseNumber] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+
+    const [loading, setLoading] = useState(false);
+
+    // Заполняем данные при открытии модалки
     useEffect(() => {
-        if (user && isOpen) {
-            setFormData({
-                name: user.name || '',
-                phone: user.phone || '',
-                idnp: user.idnp || '',
-                address: user.address || '',
-                deliveryMethod: user.deliveryMethod || 'COURIER',
-                avatarUrl: user.avatarUrl || ''
-            });
+        if (isOpen && user) {
+            setName(user.name || '');
+            setPhone(user.phone || '');
+            setDeliveryMethod((user.deliveryMethod as 'COURIER' | 'POST') || 'COURIER');
+
+            // Логика разбора адреса: "Город, Улица, Дом"
+            if (user.address) {
+                const parts = user.address.split(',').map(s => s.trim());
+                if (parts.length >= 3) {
+                    setCity(parts[0]);
+                    setStreet(parts[1]);
+                    setHouseNumber(parts.slice(2).join(', '));
+                } else if (parts.length === 1 && /^\d+$/.test(parts[0])) {
+                    // Если это просто число, значит это почтовый индекс
+                    setPostalCode(parts[0]);
+                } else {
+                    setStreet(user.address);
+                }
+            }
         }
-    }, [user, isOpen]);
+    }, [isOpen, user]);
 
-    if (!isOpen || !user) return null;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleMethodChange = (method: DeliveryMethod) => {
-        setFormData(prev => ({ ...prev, deliveryMethod: method }));
-    };
+    if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Базовая валидация
-        if (!formData.name || !formData.phone || !formData.address) {
-            alert('Пожалуйста, заполните обязательные поля');
-            return;
-        }
+        setLoading(true);
 
         try {
-            await updateUser(formData);
-            alert('Профиль успешно сохранен!');
+            // Склеиваем адрес в зависимости от метода доставки
+            const fullAddress = deliveryMethod === 'POST'
+                ? postalCode
+                : `${city}, ${street}, ${houseNumber}`;
+
+            await updateUser({
+                name,
+                phone,
+                deliveryMethod,
+                address: fullAddress
+            });
             onSuccess();
         } catch (error) {
-            // Ошибка уже обработана в контексте
+            console.error(error);
+            alert('Failed to update profile');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="profile-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="profile-modal-content">
-                <button className="profile-close-btn" onClick={onClose}>×</button>
-
-                <div className="profile-header">
-                    <h2>Завершение настройки</h2>
-                    <p className="profile-subtitle">Для оформления заказа нам нужны ваши контакты</p>
+        <div className="profile-modal-overlay" onClick={onClose}>
+            <div className="profile-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="profile-modal-header">
+                    <h2>Complete Your Profile</h2>
+                    <button className="profile-close-btn" onClick={onClose}>×</button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="profile-form">
+                    {/* Personal Info Section */}
+                    <div className="form-section">
+                        <h3 className="section-label">Personal Information</h3>
 
-                    {/* Аватарка */}
-                    <div className="avatar-section">
-                        <div className="avatar-circle">
-                            {formData.avatarUrl ? (
-                                <img src={formData.avatarUrl} alt="Avatar" />
-                            ) : (
-                                <span>{user.email[0].toUpperCase()}</span>
-                            )}
-                        </div>
-                        <input
-                            type="text"
-                            name="avatarUrl"
-                            placeholder="URL ссылки на аватар"
-                            value={formData.avatarUrl}
-                            onChange={handleChange}
-                            className="avatar-input"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Имя и Фамилия <span style={{color:'red'}}>*</span></label>
-                        <input
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="Например: Иван Чайный"
-                            required
-                        />
-                    </div>
-
-                    <div className="form-row">
                         <div className="form-group">
-                            <label>Телефон <span style={{color:'red'}}>*</span></label>
+                            <label>Full Name</label>
                             <input
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                placeholder="+373..."
+                                type="text"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="e.g. John Doe"
                                 required
                             />
                         </div>
+
                         <div className="form-group">
-                            <label>IDNP (опционально)</label>
+                            <label>Phone Number</label>
                             <input
-                                name="idnp"
-                                value={formData.idnp}
-                                onChange={handleChange}
-                                placeholder="13 цифр"
-                                maxLength={13}
+                                type="tel"
+                                value={phone}
+                                onChange={e => setPhone(e.target.value)}
+                                placeholder="+1 234 567 890"
+                                required
                             />
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Способ доставки</label>
-                        <div className="radio-group">
-                            <div
-                                className={`radio-card ${formData.deliveryMethod === 'COURIER' ? 'active' : ''}`}
-                                onClick={() => handleMethodChange('COURIER')}
-                            >
-                                <span>🚚 Курьер</span>
-                            </div>
-                            <div
-                                className={`radio-card ${formData.deliveryMethod === 'POST' ? 'active' : ''}`}
-                                onClick={() => handleMethodChange('POST')}
-                            >
-                                <span>📦 Почта</span>
-                            </div>
+                    {/* Delivery Method Selection - moved before address */}
+                    <div className="form-section">
+                        <h3 className="section-label">Delivery Method</h3>
+                        <div className="delivery-options">
+                            <label className={`delivery-option ${deliveryMethod === 'COURIER' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="delivery"
+                                    value="COURIER"
+                                    checked={deliveryMethod === 'COURIER'}
+                                    onChange={() => setDeliveryMethod('COURIER')}
+                                />
+                                <span className="option-title">Courier Delivery</span>
+                                <span className="option-desc">Directly to your door</span>
+                            </label>
+
+                            <label className={`delivery-option ${deliveryMethod === 'POST' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="delivery"
+                                    value="POST"
+                                    checked={deliveryMethod === 'POST'}
+                                    onChange={() => setDeliveryMethod('POST')}
+                                />
+                                <span className="option-title">Post Office</span>
+                                <span className="option-desc">Pickup at nearest point</span>
+                            </label>
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>
-                            {formData.deliveryMethod === 'COURIER'
-                                ? 'Адрес доставки (Улица, дом, кв.)'
-                                : 'Почтовое отделение / Адрес пункта выдачи'} <span style={{color:'red'}}>*</span>
-                        </label>
-                        <textarea
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            placeholder={formData.deliveryMethod === 'COURIER' ? "Кишинев, бул. Штефан чел Маре 1..." : "MD-2000, Отделение №1"}
-                            required
-                            rows={2}
-                        />
+                    {/* Delivery Section - conditional rendering */}
+                    <div className="form-section">
+                        <h3 className="section-label">Delivery Address</h3>
+
+                        {deliveryMethod === 'COURIER' ? (
+                            <>
+                                <div className="form-row">
+                                    <div className="form-group city-group">
+                                        <label>City</label>
+                                        <input
+                                            type="text"
+                                            value={city}
+                                            onChange={e => setCity(e.target.value)}
+                                            placeholder="New York"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group street-group">
+                                        <label>Street / Address</label>
+                                        <input
+                                            type="text"
+                                            value={street}
+                                            onChange={e => setStreet(e.target.value)}
+                                            placeholder="Broadway Ave"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group house-group">
+                                        <label>House / Apt</label>
+                                        <input
+                                            type="text"
+                                            value={houseNumber}
+                                            onChange={e => setHouseNumber(e.target.value)}
+                                            placeholder="42B"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="form-group">
+                                <label>Postal Code</label>
+                                <input
+                                    type="text"
+                                    value={postalCode}
+                                    onChange={e => setPostalCode(e.target.value)}
+                                    placeholder="e.g. MD-2001"
+                                    required
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    <button type="submit" className="btn-save-profile">
-                        Сохранить и перейти к оплате
-                    </button>
+                    <div className="form-actions">
+                        <button type="submit" className="btn-save" disabled={loading}>
+                            {loading ? 'Saving...' : 'Save & Continue to Payment'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
