@@ -1,41 +1,44 @@
 import React from 'react';
-import './TeaStory.css'; // Сейчас создадим и CSS для него
+import './TeaStory.css';
 
 const TeaStory: React.FC = () => {
     return (
         <div className="tea-story-container">
             <div className="story-hero">
-                <h1>Искусство Чая</h1>
-                <p>Путешествие от листа до чашки</p>
+                <h1>The Art of Tea</h1>
+                <p>A Journey from Leaf to Cup</p>
             </div>
 
             <div className="story-section">
                 <div className="story-text">
-                    <h2>Древние традиции</h2>
+                    <h2>Ancient Traditions</h2>
                     <p>
-                        Чай — это не просто напиток, это культура, которая объединяет людей на протяжении тысячелетий.
-                        В нашем магазине мы чтим традиции сбора и заваривания, чтобы вы могли насладиться истинным вкусом.
+                        Tea is not just a beverage—it's a culture that has united people for millennia.
+                        At YunnanSoul, we honor the traditions of harvesting and brewing to bring you the authentic taste of premium artisan tea.
                     </p>
                     <p>
-                        Каждый сорт чая имеет свой уникальный характер, зависящий от терруара, времени сбора и способа обработки.
+                        Each tea variety has its own unique character, shaped by terroir, harvest timing, and processing methods.
+                        From the misty mountains of Yunnan to your teacup, every leaf tells a story.
                     </p>
                 </div>
-                {/* Можешь потом заменить src на реальную картинку из папки public или URL */}
                 <div className="story-image">
-                    <img src="https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?q=80&w=1000&auto=format&fit=crop" alt="Чайная церемония" />
+                    <img src="https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?q=80&w=1000&auto=format&fit=crop" alt="Tea Ceremony" />
                 </div>
             </div>
 
             <div className="story-section reverse">
                 <div className="story-text">
-                    <h2>Наш подход</h2>
+                    <h2>Our Philosophy</h2>
                     <p>
-                        Мы отбираем только лучшие листья с плантаций Китая, Индии и Шри-Ланки.
-                        Мы верим, что правильный чай способен подарить гармонию и ясность ума.
+                        We carefully select only the finest leaves from ancient tea gardens in China, India, and Sri Lanka.
+                        We believe that the right tea can bring harmony, clarity of mind, and a moment of peace in your day.
+                    </p>
+                    <p>
+                        Our commitment is to sustainable sourcing and preserving traditional cultivation methods that have been passed down through generations of tea masters.
                     </p>
                 </div>
                 <div className="story-image">
-                    <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=1000&auto=format&fit=crop" alt="Листья чая" />
+                    <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=1000&auto=format&fit=crop" alt="Tea Leaves" />
                 </div>
             </div>
         </div>

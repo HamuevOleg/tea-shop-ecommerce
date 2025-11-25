@@ -6,7 +6,6 @@ export interface User {
     id: number;
     email: string;
     role: Role;
-    // Новые поля
     name?: string;
     phone?: string;
     idnp?: string;
@@ -21,15 +20,18 @@ export interface AuthResponse {
     user: User;
 }
 
+export interface Category {
+    id: number;
+    name: string;
+}
+
 export interface Product {
     id: number;
     title: string;
     price: number;
     description: string | null;
-    category: {
-        id: number;
-        name: string;
-    };
+    categoryId: number;
+    category?: Category;
     imageUrl?: string | null;
     stock?: number;
 }
