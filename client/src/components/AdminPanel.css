@@ -1,0 +1,73 @@
+.admin-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 20000;
+    backdrop-filter: blur(5px);
+}
+
+.admin-modal {
+    background: #1a120b;
+    width: 800px;
+    height: 80vh;
+    border-radius: 16px;
+    border: 1px solid #d4a373;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+
+.admin-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(212, 163, 115, 0.2);
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.admin-header h2 { margin: 0; color: #d4a373; }
+.close-btn { background: none; border: none; font-size: 2rem; color: #fff; cursor: pointer; }
+
+.admin-tabs {
+    display: flex;
+    background: #2c1e16;
+}
+
+.admin-tabs button {
+    flex: 1; padding: 15px; background: none; border: none;
+    color: #a69080; font-size: 1.1rem; cursor: pointer;
+    border-bottom: 3px solid transparent;
+}
+
+.admin-tabs button.active {
+    color: #fff; border-bottom-color: #d4a373; background: rgba(212, 163, 115, 0.1);
+}
+
+.admin-content { padding: 20px; overflow-y: auto; flex: 1; }
+
+/* Форма */
+.add-product-form {
+    background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 30px;
+}
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.add-product-form input, .add-product-form select, .add-product-form textarea {
+    width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px;
+}
+.btn-add {
+    background: #d4a373; color: #000; border: none; padding: 10px 20px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+
+/* Список товаров */
+.admin-product-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px; border-bottom: 1px solid #333;
+}
+.admin-thumb { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+.btn-delete { background: #ff4d4f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+/* Заказы */
+.admin-order-card {
+    background: #2c1e16; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444;
+}
+.order-header { display: flex; justify-content: space-between; color: #d4a373; font-weight: bold; margin-bottom: 10px; }
+.order-actions select {
+    padding: 5px; background: #000; color: #fff; border: 1px solid #d4a373; border-radius: 4px;
+}

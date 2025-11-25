@@ -1,120 +1,81 @@
+// client/src/components/Navbar.tsx
 import { useState } from 'react';
+import './Navbar.css';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import { ProfileModal } from './ProfileModal';
+import AdminPanel from './AdminPanel';
+import ProfileModal from './ProfileModal'; // <--- Добавляем импорт профиля
 
 interface NavbarProps {
+    onCartClick: () => void;
     onOpenAuth: () => void;
 }
 
-export const Navbar = ({ onOpenAuth }: NavbarProps) => {
+export const Navbar = ({ onCartClick, onOpenAuth }: NavbarProps) => {
     const { user, logout } = useAuth();
-    const { totalItems, openCart } = useCart();
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+    // Состояния для модальных окон
+    const [isAdminOpen, setIsAdminOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false); // <--- Состояние для профиля
 
     return (
         <>
-            <nav style={{
-                background: 'var(--color-bg)',
-                borderBottom: '1px solid var(--color-card)',
-                padding: '1rem 2rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100
-            }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 'bold', fontFamily: 'var(--font-serif)', color: 'var(--color-text-main)', lineHeight: 1 }}>
-                        <span style={{ color: 'var(--color-accent)' }}>Yunnan</span>Soul
-                    </span>
-                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', letterSpacing: '1px' }}>
-                        雲南之魂
-                    </span>
-                </div>
+            <nav className="navbar">
+                <div className="navbar-logo">YunnanSoul</div>
+                <div className="navbar-links">
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                    <button
-                        onClick={openCart}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-text-main)',
-                            fontSize: '1.5rem',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            padding: '5px'
-                        }}
-                        title="Open Cart"
-                    >
-                        🛒
-                        {totalItems > 0 && (
-                            <span style={{
-                                position: 'absolute',
-                                top: -5,
-                                right: -8,
-                                background: '#ef4444',
-                                color: 'white',
-                                fontSize: '0.75rem',
-                                padding: '2px 6px',
-                                borderRadius: '50%',
-                                fontWeight: 'bold',
-                                border: '2px solid var(--color-bg)'
-                            }}>
-                                {totalItems}
-                            </span>
-                        )}
+                    {/* Кнопка Админки (Только для роли ADMIN) */}
+                    {user?.role === 'ADMIN' && (
+                        <button
+                            className="nav-btn admin-btn"
+                            onClick={() => setIsAdminOpen(true)}
+                            style={{ color: '#ff7875', borderColor: '#ff7875', marginRight: '10px' }}
+                        >
+                            Admin Panel
+                        </button>
+                    )}
+
+                    <button className="nav-btn" onClick={onCartClick}>
+                        Cart
                     </button>
 
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="user-menu">
+                            {/* Сделали email кнопкой для открытия профиля */}
                             <button
+                                className="nav-btn username-btn"
                                 onClick={() => setIsProfileOpen(true)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--color-text-muted)',
-                                    fontSize: '0.9rem',
-                                    cursor: 'pointer',
-                                    textDecoration: 'underline',
-                                    padding: '0.5rem'
-                                }}
+                                style={{ fontWeight: 'bold', textDecoration: 'underline', border: 'none' }}
                             >
                                 {user.email}
                             </button>
-                            <button
-                                onClick={logout}
-                                style={{
-                                    background: 'transparent',
-                                    border: '1px solid var(--color-accent)',
-                                    color: 'var(--color-accent)',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontFamily: 'var(--font-sans)',
-                                    fontSize: '0.9rem'
-                                }}
-                            >
-                                Sign Out
-                            </button>
+
+                            <button className="nav-btn logout" onClick={logout}>Exit</button>
                         </div>
                     ) : (
-                        <button
-                            onClick={onOpenAuth}
-                            className="btn-primary"
-                        >
-                            Sign In
+                        <button className="nav-btn" onClick={onOpenAuth}>
+                            Login
                         </button>
                     )}
                 </div>
             </nav>
 
+            {/* --- Модальные окна --- */}
+
+            {/* Админка */}
+            <AdminPanel
+                isOpen={isAdminOpen}
+                onClose={() => setIsAdminOpen(false)}
+            />
+
+            {/* Профиль пользователя */}
             <ProfileModal
+                user={user}
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
-                onSuccess={() => setIsProfileOpen(false)}
+                onLogout={logout}
             />
         </>
     );
 };
+
+export default Navbar;
