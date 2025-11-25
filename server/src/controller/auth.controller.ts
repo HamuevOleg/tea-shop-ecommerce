@@ -1,4 +1,3 @@
-// server/src/controller/auth.controller.ts
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
 import { password as bunPassword } from 'bun'
@@ -9,14 +8,12 @@ export const authController = new Elysia({ prefix: '/auth' })
     .post('/register', async ({ body, set }) => {
         const { email, password } = body
 
-        // Проверка существования
         const existing = await db.user.findUnique({ where: { email } })
         if (existing) {
             set.status = 400
             return { message: 'User already exists' }
         }
 
-        // Хэширование пароля
         const hashedPassword = await bunPassword.hash(password)
 
         const user = await db.user.create({
@@ -49,11 +46,8 @@ export const authController = new Elysia({ prefix: '/auth' })
             return { message: 'Invalid credentials' }
         }
 
-        // В реальном проекте здесь нужно генерировать JWT.
-        // Для примера возвращаем просто токен-заглушку и объект юзера.
         const token = 'fake-jwt-token-' + user.id
 
-        // Удаляем пароль из ответа
         const { password: _, ...userWithoutPassword } = user
 
         return {
@@ -68,29 +62,32 @@ export const authController = new Elysia({ prefix: '/auth' })
         })
     })
 
-    // Новый эндпоинт обновления профиля
     .put('/profile', async ({ body, set }) => {
         const { id, name, phone, idnp, address, deliveryMethod, avatarUrl } = body
 
         try {
+            // @ts-ignore
+            const updateData: any = {}
+
+            if (name !== undefined) updateData.name = name
+            if (phone !== undefined) updateData.phone = phone
+            if (idnp !== undefined) updateData.idnp = idnp
+            if (address !== undefined) updateData.address = address
+            if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
+            if (deliveryMethod !== undefined) updateData.deliveryMethod = deliveryMethod
+
             const updatedUser = await db.user.update({
                 where: { id: Number(id) },
-                data: {
-                    name,
-                    phone,
-                    idnp,
-                    address,
-                    deliveryMethod,
-                    avatarUrl
-                }
+                data: updateData
             })
 
             const { password: _, ...userWithoutPassword } = updatedUser
             return { success: true, user: userWithoutPassword }
 
         } catch (error) {
+            console.error('Profile update error:', error)
             set.status = 400
-            return { success: false, message: "Could not update profile" }
+            return { success: false, message: "Could not update profile", error: String(error) }
         }
     }, {
         body: t.Object({
@@ -99,7 +96,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             phone: t.Optional(t.String()),
             idnp: t.Optional(t.String()),
             address: t.Optional(t.String()),
-            deliveryMethod: t.Optional(t.Enum({ COURIER: 'COURIER', POST: 'POST' })),
+            deliveryMethod: t.Optional(t.String()),
             avatarUrl: t.Optional(t.String())
         })
     })

@@ -1,4 +1,3 @@
-// client/src/components/ProductModal.tsx
 import React from 'react';
 import type { Product } from '../types';
 import './ProductModal.css';
@@ -16,7 +15,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                                                               onActionButtonClick,
                                                               isUserLoggedIn
                                                           }) => {
-    // Закрытие по клику на фон
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {
             onClose();
@@ -28,7 +26,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div className="modal-content-premium">
                 <button className="modal-close-btn" onClick={onClose}>×</button>
 
-                {/* Левая колонка - Фото */}
                 <div className="modal-image-section">
                     <img
                         src={product.imageUrl || 'https://via.placeholder.com/600x800?text=Tea+Image'}
@@ -36,7 +33,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     />
                 </div>
 
-                {/* Правая колонка - Инфо */}
                 <div className="modal-info-section">
                     <span className="modal-category-tag">
                         {product.category?.name || 'Premium Tea'}

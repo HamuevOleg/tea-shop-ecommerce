@@ -1,118 +1,179 @@
-/* client/src/components/ProductModal.css */
-.modal-overlay {
+.profile-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85); /* Более темный фон */
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
-    backdrop-filter: blur(8px); /* Эффект размытия фона */
-    padding: 2rem;
+    z-index: 4000;
 }
 
-.modal-content-premium {
-    background: var(--color-card);
-    background: linear-gradient(145deg, var(--color-card) 0%, #1a120b 100%); /* Градиент */
+.profile-modal-content {
+    background: #fff;
     width: 100%;
-    max-width: 900px;
+    max-width: 500px;
+    padding: 2rem;
     border-radius: 12px;
-    border: 1px solid var(--color-accent);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
     position: relative;
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideUp 0.3s ease-out;
+    color: #4a4a4a;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
-@media (min-width: 768px) {
-    .modal-content-premium {
-        flex-direction: row;
-        height: 600px; /* Фиксированная высота на десктопе */
-    }
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
-.modal-close-btn {
+.profile-close-btn {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: rgba(0,0,0,0.5);
-    color: var(--color-text-main);
+    background: none;
     border: none;
     font-size: 1.5rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
     cursor: pointer;
+    color: #888;
     z-index: 10;
-    transition: all 0.3s;
 }
 
-.modal-close-btn:hover {
-    background: var(--color-accent);
-    color: var(--color-bg);
+.profile-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
-/* Левая часть - Изображение */
-.modal-image-section {
-    flex: 1;
-    background-color: #000;
+.avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.avatar-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #e0d8d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
+    font-size: 2.5rem;
+    color: #fff;
+    border: 3px solid var(--color-accent, #a69080);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.modal-image-section img {
+.avatar-circle img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.9;
 }
 
-/* Правая часть - Информация */
-.modal-info-section {
-    flex: 1;
-    padding: 2.5rem;
+.avatar-input {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 80%;
+    text-align: center;
+}
+
+.profile-subtitle {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
+
+.profile-form {
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Скролл если текст длинный */
+    gap: 1rem;
 }
 
-.modal-category-tag {
-    color: var(--color-accent);
-    font-family: var(--font-sans);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
-    display: block;
+.form-row {
+    display: flex;
+    gap: 1rem;
 }
 
-.modal-title-premium {
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    color: var(--color-text-main);
-    margin-bottom: 1.5rem;
-    line-height: 1.2;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
 }
 
-.modal-description-premium {
-    color: var(--color-text-muted);
-    font-size: 1rem;
-    line-height: 1.8;
-    margin-bottom: auto; /* Толкает цену вниз */
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
 }
 
-.modal-footer-premium {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(212, 163, 115, 0.2); /* Полупрозрачный золотой разделитель */
+.form-group input, .form-group textarea {
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    border-color: #a69080;
+    outline: none;
+}
+
+.radio-group {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.radio-card {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    background: #f9f9f9;
 }
 
-.modal-price-premium {
-    font-size: 1.8rem;
-    color: var(--color-accent);
-    font-family: var(--font-serif);
-    font-weight: bold;
+.radio-card:hover {
+    background: #f0f0f0;
+}
+
+.radio-card.active {
+    border-color: #a69080;
+    background: #fdfaf8;
+    color: #8c7b70;
+    font-weight: 600;
+}
+
+.radio-card input {
+    display: none;
+}
+
+.btn-save-profile {
+    margin-top: 1.5rem;
+    background: #a69080;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-save-profile:hover {
+    background: #8c7b70;
 }

@@ -1,7 +1,7 @@
 // client/src/components/ProfileModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DeliveryMethod } from '../types';
+import type {DeliveryMethod} from '../types';
 import './ProfileModal.css';
 
 interface ProfileModalProps {

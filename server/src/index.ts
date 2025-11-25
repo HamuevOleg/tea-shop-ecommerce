@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia'
 import { swagger } from '@elysiajs/swagger'
 import { cors } from '@elysiajs/cors'
-import { authController } from './controller/auth.controller'
+import { authController } from './controller/auth.controller.ts'
 import { orderController } from './controller/order.controller'
 import { productController } from './controller/product.controller'
 
