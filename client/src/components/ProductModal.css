@@ -1,201 +1,118 @@
+/* client/src/components/ProductModal.css */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85); /* Более темный фон */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
+    backdrop-filter: blur(8px); /* Эффект размытия фона */
     padding: 2rem;
-    animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.modal-content {
-    background-color: var(--color-card);
-    border-radius: 16px;
+.modal-content-premium {
+    background: var(--color-card);
+    background: linear-gradient(145deg, var(--color-card) 0%, #1a120b 100%); /* Градиент */
+    width: 100%;
     max-width: 900px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: var(--color-text-main);
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 10;
-    transition: all 0.3s ease;
-}
-
-.modal-close:hover {
-    background-color: var(--color-accent);
-    color: #1a120b;
-    transform: rotate(90deg);
-}
-
-.modal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-.modal-image-container {
-    position: relative;
+    border-radius: 12px;
+    border: 1px solid var(--color-accent);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border-radius: 16px 0 0 16px;
-}
-
-.modal-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    min-height: 400px;
-}
-
-.modal-details {
-    padding: 2rem;
+    position: relative;
     display: flex;
     flex-direction: column;
 }
 
-.modal-category {
-    font-size: 0.85rem;
+@media (min-width: 768px) {
+    .modal-content-premium {
+        flex-direction: row;
+        height: 600px; /* Фиксированная высота на десктопе */
+    }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0,0,0,0.5);
+    color: var(--color-text-main);
+    border: none;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s;
+}
+
+.modal-close-btn:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+}
+
+/* Левая часть - Изображение */
+.modal-image-section {
+    flex: 1;
+    background-color: #000;
+    overflow: hidden;
+}
+
+.modal-image-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+}
+
+/* Правая часть - Информация */
+.modal-info-section {
+    flex: 1;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Скролл если текст длинный */
+}
+
+.modal-category-tag {
+    color: var(--color-accent);
+    font-family: var(--font-sans);
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--color-text-muted);
-    margin-bottom: 0.5rem;
-}
-
-.modal-title {
-    font-size: 2rem;
-    color: var(--color-text-main);
-    margin-bottom: 0.5rem;
-    font-family: var(--font-serif);
-}
-
-.modal-year {
-    font-style: italic;
-    color: var(--color-accent);
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
     display: block;
 }
 
-.modal-description {
-    color: #ccc;
-    line-height: 1.8;
-    margin-bottom: 2rem;
-    font-size: 1rem;
-}
-
-.modal-features {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-}
-
-.modal-features h3 {
-    color: var(--color-accent);
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-}
-
-.modal-features ul {
-    list-style: none;
-    padding: 0;
-}
-
-.modal-features li {
-    color: var(--color-text-muted);
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.modal-features li:last-child {
-    border-bottom: none;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-price {
+.modal-title-premium {
+    font-family: var(--font-serif);
     font-size: 2rem;
-    font-weight: bold;
+    color: var(--color-text-main);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.modal-description-premium {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: auto; /* Толкает цену вниз */
+}
+
+.modal-footer-premium {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(212, 163, 115, 0.2); /* Полупрозрачный золотой разделитель */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-price-premium {
+    font-size: 1.8rem;
     color: var(--color-accent);
-}
-
-.modal-add-btn {
-    background-color: var(--color-accent);
-    color: #1a120b;
-    padding: 1rem 2rem;
-    border-radius: 8px;
+    font-family: var(--font-serif);
     font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-}
-
-.modal-add-btn:hover {
-    background-color: var(--color-accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(212, 163, 115, 0.3);
-}
-
-@media (max-width: 768px) {
-    .modal-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .modal-image-container {
-        border-radius: 16px 16px 0 0;
-    }
-
-    .modal-image {
-        min-height: 300px;
-    }
-
-    .modal-details {
-        padding: 1.5rem;
-    }
 }

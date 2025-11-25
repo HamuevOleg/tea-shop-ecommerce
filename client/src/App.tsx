@@ -1,190 +1,179 @@
 // client/src/App.tsx
 import { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
+import { useCart } from './context/CartContext'; // Импорт корзины
 import { Navbar } from './components/Navbar';
-import api from './api'; // Импорт нашего настроенного axios
-import type { Product } from './types'; // Импорт типов
+import { ProductModal } from './components/ProductModal';
+import { CartModal } from './components/CartModal.tsx'; // Импорт шторки корзины
+import api from './api';
+import type { Product } from './types';
 import './App.css';
 
 function App() {
     const { user, login, register } = useAuth();
+    const { addToCart } = useCart(); // Хук для добавления
 
-    // Состояния для Auth
+    // --- Состояния данных ---
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // --- Состояния UI (Модалки) ---
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [isLoginMode, setIsLoginMode] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoginMode, setIsLoginMode] = useState(true);
-    const [authLoading, setAuthLoading] = useState(false);
 
-    // Состояния для Товаров
-    const [products, setProducts] = useState<Product[]>([]);
-    const [productsLoading, setProductsLoading] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    // Загружаем товары, если пользователь вошел
+    // Загрузка товаров при старте
     useEffect(() => {
-        if (user) {
-            fetchProducts();
-        }
-    }, [user]);
+        fetchProducts();
+    }, []);
 
     const fetchProducts = async () => {
-        setProductsLoading(true);
+        setLoading(true);
         try {
-            // Запрос к нашему бэкенду
             const { data } = await api.get<Product[]>('/products');
             setProducts(data);
         } catch (error) {
-            console.error('Ошибка загрузки товаров:', error);
-            alert('Не удалось загрузить товары');
+            console.error('Error fetching products:', error);
         } finally {
-            setProductsLoading(false);
+            setLoading(false);
         }
     };
 
+    // --- Обработчики ---
+
+    // 1. Клик по кнопке в модалке товара ("Add to Cart" / "Sign In")
+    const handleModalActionClick = (product: Product) => {
+        if (!user) {
+            // Если гость - закрываем товар, открываем вход
+            setSelectedProduct(null);
+            setShowAuthModal(true);
+        } else {
+            // Если свой - добавляем в корзину
+            addToCart(product);
+            setSelectedProduct(null); // Закрываем модалку товара
+            // Корзина откроется автоматически (логика внутри addToCart в CartContext)
+        }
+    };
+
+    // 2. Вход / Регистрация
     const handleAuthSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setAuthLoading(true);
         try {
             if (isLoginMode) {
                 await login(email, password);
             } else {
                 await register(email, password);
             }
+            setShowAuthModal(false);
+            setEmail('');
+            setPassword('');
         } catch (err) {
-            // Ошибка уже обработана в context
-        } finally {
-            setAuthLoading(false);
+            // Ошибки логирует AuthContext
         }
     };
 
     return (
         <div className="app-container">
-            <Navbar />
+            <Navbar onOpenAuth={() => setShowAuthModal(true)} />
 
+            {/* Глобальная корзина (Шторка) */}
+            <CartModal />
+
+            {/* --- Hero Section --- */}
+            <header className="hero">
+                <h1>The Spirit of Tea</h1>
+                <p>Discover rare, aged Pu-erh and single-origin teas sourced directly from the ancient mountains of Yunnan.</p>
+            </header>
+
+            {/* --- Main Content --- */}
             <main className="main-content">
-                {!user ? (
-                    // --- ЭКРАН ВХОДА ---
-                    <div className="auth-card">
-                        <h2>{isLoginMode ? 'Вход в аккаунт' : 'Регистрация'}</h2>
-                        <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
-                            {isLoginMode
-                                ? 'Рады видеть вас снова! Выпейте чаю.'
-                                : 'Создайте аккаунт, чтобы заказывать лучший чай.'}
-                        </p>
+                <div className="section-title">- Curated Collection -</div>
 
-                        <form onSubmit={handleAuthSubmit} className="form-group">
+                {loading ? (
+                    <div style={{ textAlign: 'center', color: '#a69080', marginTop: '3rem' }}>
+                        Steeping the catalogue... 🍵
+                    </div>
+                ) : (
+                    <div className="product-grid">
+                        {products.map((product) => (
+                            <div
+                                key={product.id}
+                                className="product-card"
+                                onClick={() => setSelectedProduct(product)} // Открываем детали
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <img
+                                    src={product.imageUrl || 'https://via.placeholder.com/400x300'}
+                                    alt={product.title}
+                                    className="card-image"
+                                />
+                                <div className="card-body">
+                                    <span className="card-category">{product.category?.name}</span>
+                                    <h3 className="card-title">{product.title}</h3>
+                                    <p className="card-desc">{product.description}</p>
+
+                                    <div className="card-footer">
+                                        <span className="card-price">${Number(product.price).toFixed(2)}</span>
+                                        <button className="btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.7rem' }}>
+                                            View Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </main>
+
+            {/* --- Модалка товара (Детали) --- */}
+            {selectedProduct && (
+                <ProductModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    isUserLoggedIn={!!user}
+                    onActionButtonClick={handleModalActionClick}
+                />
+            )}
+
+            {/* --- Модалка авторизации --- */}
+            {showAuthModal && (
+                <div className="auth-overlay" onClick={(e) => {
+                    if (e.target === e.currentTarget) setShowAuthModal(false);
+                }}>
+                    <div className="auth-modal">
+                        <h2 style={{ color: '#d4a373', marginBottom: '1.5rem', textAlign: 'center', fontFamily: 'var(--font-serif)' }}>
+                            {isLoginMode ? 'Welcome Back' : 'Join the Journey'}
+                        </h2>
+                        <form onSubmit={handleAuthSubmit}>
                             <input
                                 type="email"
-                                placeholder="Email address"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
+                                placeholder="Email Address"
+                                value={email} onChange={e => setEmail(e.target.value)} required
                             />
                             <input
                                 type="password"
                                 placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                                value={password} onChange={e => setPassword(e.target.value)} required
                             />
-                            <button
-                                type="submit"
-                                className="btn btn-primary"
-                                disabled={authLoading}
-                            >
-                                {authLoading ? 'Загрузка...' : (isLoginMode ? 'Войти' : 'Создать аккаунт')}
+                            <button type="submit" className="btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}>
+                                {isLoginMode ? 'Sign In' : 'Create Account'}
                             </button>
                         </form>
-
-                        <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                            {isLoginMode ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
-                            <button
+                        <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#a69080' }}>
+                            {isLoginMode ? 'New to Yunnan Soul?' : 'Already have an account?'}
+                            <span
                                 onClick={() => setIsLoginMode(!isLoginMode)}
-                                className="btn-link"
+                                style={{ color: '#d4a373', cursor: 'pointer', marginLeft: '8px', textDecoration: 'underline', fontWeight: 'bold' }}
                             >
-                                {isLoginMode ? 'Зарегистрироваться' : 'Войти'}
-                            </button>
-                        </div>
+                                {isLoginMode ? 'Register now' : 'Sign in here'}
+                            </span>
+                        </p>
                     </div>
-                ) : (
-                    // --- ВИТРИНА МАГАЗИНА ---
-                    <div>
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h1>Наш ассортимент 🌿</h1>
-                            <p style={{ color: 'var(--text-secondary)' }}>
-                                Лучшие сорта чая, отобранные специально для вас.
-                            </p>
-                        </div>
-
-                        {productsLoading ? (
-                            <div style={{ textAlign: 'center', padding: '2rem' }}>Загрузка чая... 🍵</div>
-                        ) : (
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                gap: '2rem'
-                            }}>
-                                {products.map((product) => (
-                                    <div key={product.id} style={{
-                                        background: 'white',
-                                        borderRadius: 'var(--radius)',
-                                        boxShadow: 'var(--shadow)',
-                                        overflow: 'hidden',
-                                        display: 'flex',
-                                        flexDirection: 'column'
-                                    }}>
-                                        {/* Изображение товара */}
-                                        <div style={{ height: '200px', background: '#e5e7eb', overflow: 'hidden' }}>
-                                            {product.imageUrl ? (
-                                                <img
-                                                    src={product.imageUrl}
-                                                    alt={product.title}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                />
-                                            ) : (
-                                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🍵</div>
-                                            )}
-                                        </div>
-
-                                        {/* Информация о товаре */}
-                                        <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                                                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{product.title}</h3>
-                                                <span style={{
-                                                    background: '#ecfdf5',
-                                                    color: '#059669',
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: '99px',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold'
-                                                }}>
-                          {product.category?.name}
-                        </span>
-                                            </div>
-
-                                            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem', flex: 1 }}>
-                                                {product.description}
-                                            </p>
-
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                        <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937' }}>
-                          ${Number(product.price).toFixed(2)}
-                        </span>
-                                                <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
-                                                    В корзину
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {products.length === 0 && !productsLoading && (
-                            <p style={{ textAlign: 'center' }}>Товары не найдены.</p>
-                        )}
-                    </div>
-                )}
-            </main>
+                </div>
+            )}
         </div>
     );
 }

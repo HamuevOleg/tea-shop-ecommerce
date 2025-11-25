@@ -1,63 +1,68 @@
+// client/src/components/ProductModal.tsx
+import React from 'react';
 import type { Product } from '../types';
 import './ProductModal.css';
 
 interface ProductModalProps {
     product: Product;
     onClose: () => void;
-    onAddToCart: (product: Product) => void;
+    onActionButtonClick: (product: Product) => void;
+    isUserLoggedIn: boolean;
 }
 
-function ProductModal({ product, onClose, onAddToCart }: ProductModalProps) {
+export const ProductModal: React.FC<ProductModalProps> = ({
+                                                              product,
+                                                              onClose,
+                                                              onActionButtonClick,
+                                                              isUserLoggedIn
+                                                          }) => {
+    // Закрытие по клику на фон
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {
             onClose();
         }
     };
 
-    const handleAddToCart = () => {
-        onAddToCart(product);
-        onClose();
-    };
-
     return (
         <div className="modal-overlay" onClick={handleOverlayClick}>
-            <div className="modal-content">
-                <button className="modal-close" onClick={onClose}>
-                    ✕
-                </button>
+            <div className="modal-content-premium">
+                <button className="modal-close-btn" onClick={onClose}>×</button>
 
-                <div className="modal-grid">
-                    <div className="modal-image-container">
-                        <img src={product.imageUrl} alt={product.name} className="modal-image" />
-                    </div>
+                {/* Левая колонка - Фото */}
+                <div className="modal-image-section">
+                    <img
+                        src={product.imageUrl || 'https://via.placeholder.com/600x800?text=Tea+Image'}
+                        alt={product.title}
+                    />
+                </div>
 
-                    <div className="modal-details">
-                        <span className="modal-category">{product.category}</span>
-                        <h2 className="modal-title">{product.name}</h2>
-                        <span className="modal-year">{product.year} Harvest</span>
+                {/* Правая колонка - Инфо */}
+                <div className="modal-info-section">
+                    <span className="modal-category-tag">
+                        {product.category?.name || 'Premium Tea'}
+                    </span>
 
-                        <p className="modal-description">{product.description}</p>
+                    <h2 className="modal-title-premium">{product.title}</h2>
 
-                        <div className="modal-features">
-                            <h3>Brewing Notes</h3>
-                            <ul>
-                                <li>Water Temperature: 95-100°C</li>
-                                <li>Steep Time: 15-30 seconds</li>
-                                <li>Multiple Infusions: 8-12 steeps</li>
-                            </ul>
+                    <p className="modal-description-premium">
+                        {product.description || "No description available for this exclusive item."}
+                    </p>
+
+                    <div className="modal-footer-premium">
+                        <div className="modal-price-premium">
+                            ${Number(product.price).toFixed(2)}
                         </div>
 
-                        <div className="modal-footer">
-                            <div className="modal-price">${product.price.toFixed(2)}</div>
-                            <button className="modal-add-btn" onClick={handleAddToCart}>
-                                Add to Cart
-                            </button>
-                        </div>
+                        <button
+                            className="btn-primary"
+                            style={{ padding: '1rem 2rem', fontSize: '1rem' }}
+                            onClick={() => onActionButtonClick(product)}
+                        >
+                            {isUserLoggedIn ? 'Add to Cart' : 'Sign In to Buy'}
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     );
-}
-
-export default ProductModal;
+};

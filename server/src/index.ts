@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { swagger } from '@elysiajs/swagger'
 import { cors } from '@elysiajs/cors'
 import { authController } from './controller/auth.controller'
-// import { db } from './db' // Пока не используем напрямую здесь, но пригодится
+import { db } from './db' // <--- 1. Раскомментируйте эту строку
 
 const app = new Elysia()
     // 1. Документация Swagger
@@ -16,7 +16,7 @@ const app = new Elysia()
             },
             tags: [
                 { name: 'Auth', description: 'Регистрация и вход' },
-                { name: 'Products', description: 'Товары (Скоро)' }
+                { name: 'Products', description: 'Товары' }
             ]
         }
     }))
@@ -25,6 +25,15 @@ const app = new Elysia()
 
     // 3. Подключаем наши контроллеры
     .use(authController)
+
+    // 4. Добавляем маршрут для получения товаров
+    .get('/products', async () => {
+        // Получаем все товары из базы данных через Prisma
+        const products = await db.product.findMany({
+            include: { category: true } // Можно сразу подгрузить категорию, если нужно
+        })
+        return products
+    })
 
     .listen(3000)
 

@@ -1,80 +1,76 @@
-// server/prisma/seed.ts
 import { PrismaClient } from '@prisma/client'
 
-const db = new PrismaClient()
+const prisma = new PrismaClient()
 
 async function main() {
-    console.log('🌱 Начинаем посев данных...')
+    console.log('🌱 Starting seeding...')
 
-    // 1. Создаем категории (используем upsert, чтобы не создавать дубликаты)
-    const blackTea = await db.category.upsert({
-        where: { name: 'Черный чай' },
-        update: {},
-        create: { name: 'Черный чай' }
+    // Очистка базы перед посевом (аккуратно, удалит все связи)
+    await prisma.orderItem.deleteMany()
+    await prisma.order.deleteMany()
+    await prisma.product.deleteMany()
+    await prisma.category.deleteMany()
+    await prisma.user.deleteMany()
+
+    // 1. Создаем категории (English + Chinese flavor)
+    const agedTea = await prisma.category.create({
+        data: { name: 'Aged Shu Pu-erh (熟茶)' },
     })
 
-    const greenTea = await db.category.upsert({
-        where: { name: 'Зеленый чай' },
-        update: {},
-        create: { name: 'Зеленый чай' }
+    const redTea = await prisma.category.create({
+        data: { name: 'Yunnan Red (滇红)' },
     })
 
-    const herbalTea = await db.category.upsert({
-        where: { name: 'Травяной чай' },
-        update: {},
-        create: { name: 'Травяной чай' }
+    const oolong = await prisma.category.create({
+        data: { name: 'Rock Oolong (岩茶)' },
     })
 
-    // 2. Очищаем старые товары (опционально, чтобы не дублировать при повторном запуске)
-    await db.product.deleteMany({})
-
-    // 3. Создаем товары
-    await db.product.createMany({
-        data: [
-            {
-                title: 'Earl Grey Premium',
-                price: 12.50,
-                description: 'Классический черный чай с натуральным маслом бергамота. Насыщенный вкус и яркий аромат.',
-                categoryId: blackTea.id,
-                stock: 100,
-                imageUrl: 'https://images.unsplash.com/photo-1564890369478-c5bc62dde0a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                title: 'Golden Yunnan',
-                price: 15.00,
-                description: 'Элитный китайский красный чай с большим содержанием золотых почек. Мягкий вкус с нотками меда.',
-                categoryId: blackTea.id,
-                stock: 80,
-                imageUrl: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                title: 'Sencha Kyoto',
-                price: 18.00,
-                description: 'Традиционный японский зеленый чай первого сбора. Свежий травяной вкус и изумрудный цвет настоя.',
-                categoryId: greenTea.id,
-                stock: 50,
-                imageUrl: 'https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                title: 'Dragon Well (Longjing)',
-                price: 22.50,
-                description: 'Знаменитый китайский зеленый чай. Плоские листочки, ореховый аромат и сладкое послевкусие.',
-                categoryId: greenTea.id,
-                stock: 30,
-                imageUrl: 'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                title: 'Альпийские травы',
-                price: 10.00,
-                description: 'Сбор из мяты, ромашки и лимонной травы. Идеально для вечернего чаепития без кофеина.',
-                categoryId: herbalTea.id,
-                stock: 120,
-                imageUrl: 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            }
-        ]
+    // 2. Создаем товары (English descriptions)
+    await prisma.product.create({
+        data: {
+            title: 'Menghai "Golden Era" 2012 Cake',
+            description: 'A deeply aged Shu Pu-erh cake from Menghai factory. Notes of damp earth, aged wood, and a silky, thick liquor. Smooth finish with zero bitterness.',
+            price: 89.99,
+            stock: 15,
+            imageUrl: 'https://images.unsplash.com/photo-1547825407-2d060104b7f8?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Фото пуэрного блина
+            categoryId: agedTea.id,
+        },
     })
 
-    console.log('✅ База данных успешно наполнена!')
+    await prisma.product.create({
+        data: {
+            title: 'Imperial Golden Bud Dian Hong',
+            description: 'The highest grade of Yunnan Red tea, consisting solely of golden buds. Rich, malty sweetness with hints of dark chocolate and honey. A luxurious daily drinker.',
+            price: 45.50,
+            stock: 50,
+            imageUrl: 'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&w=800&q=80', // Фото красного чая
+            categoryId: redTea.id,
+        },
+    })
+
+    await prisma.product.create({
+        data: {
+            title: 'Wuyi Da Hong Pao "Big Red Robe"',
+            description: 'Legendary rock oolong from the Wuyi mountains. Heavily roasted over charcoal to produce deep mineral notes, roasted nuts, and a long-lasting floral aftertaste.',
+            price: 62.00,
+            stock: 25,
+            imageUrl: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80', // Фото улуна
+            categoryId: oolong.id,
+        },
+    })
+
+    await prisma.product.create({
+        data: {
+            title: 'Ancient Tree Raw Pu-erh 2020',
+            description: 'Sheng (Raw) Pu-erh from 300-year-old tea trees in Jingmai mountain. High energy (Cha Qi), prominent orchid aroma, and distinct bitterness that turns sweet quickly.',
+            price: 120.00,
+            stock: 10,
+            imageUrl: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80',
+            categoryId: agedTea.id,
+        },
+    })
+
+    console.log('✅ Database successfully seeded with English data!')
 }
 
 main()
@@ -83,5 +79,5 @@ main()
         process.exit(1)
     })
     .finally(async () => {
-        await db.$disconnect()
+        await prisma.$disconnect()
     })
