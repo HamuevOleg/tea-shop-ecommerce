@@ -1,90 +1,105 @@
-// server/src/controllers/auth.controller.ts
+// server/src/controller/auth.controller.ts
 import { Elysia, t } from 'elysia'
-import { jwt } from '@elysiajs/jwt'
-import { db } from '../db'
+import { PrismaClient } from '@prisma/client'
+import { password as bunPassword } from 'bun'
+
+const db = new PrismaClient()
 
 export const authController = new Elysia({ prefix: '/auth' })
-    .use(
-        jwt({
-            name: 'jwt',
-            secret: process.env.JWT_SECRET || 'secret'
-        })
-    )
-    // --- РЕГИСТРАЦИЯ ---
-    .post('/register', async ({ body, error }) => {
-        // 1. Проверяем, есть ли такой email
-        const existingUser = await db.user.findUnique({
-            where: { email: body.email }
-        })
+    .post('/register', async ({ body, set }) => {
+        const { email, password } = body
 
-        if (existingUser) {
-            return error(400, 'User already exists')
+        // Проверка существования
+        const existing = await db.user.findUnique({ where: { email } })
+        if (existing) {
+            set.status = 400
+            return { message: 'User already exists' }
         }
 
-        // 2. Хешируем пароль (Bun делает это одной строчкой)
-        const hashedPassword = await Bun.password.hash(body.password)
+        // Хэширование пароля
+        const hashedPassword = await bunPassword.hash(password)
 
-        // 3. Создаем пользователя
-        const newUser = await db.user.create({
+        const user = await db.user.create({
             data: {
-                email: body.email,
-                password: hashedPassword,
-                role: 'USER' // По умолчанию роль USER
+                email,
+                password: hashedPassword
             }
         })
 
-        return {
-            success: true,
-            message: 'User registered successfully',
-            user: { id: newUser.id, email: newUser.email }
-        }
+        return { success: true, message: 'User created' }
     }, {
-        // Валидация входных данных
         body: t.Object({
-            email: t.String({ format: 'email' }),
-            password: t.String({ minLength: 6 })
-        }),
-        detail: { tags: ['Auth'] }
+            email: t.String(),
+            password: t.String()
+        })
     })
 
-    // --- ЛОГИН ---
-    .post('/login', async ({ body, jwt, error }) => {
-        // 1. Ищем пользователя
-        const user = await db.user.findUnique({
-            where: { email: body.email }
-        })
+    .post('/login', async ({ body, set }) => {
+        const { email, password } = body
 
+        const user = await db.user.findUnique({ where: { email } })
         if (!user) {
-            return error(401, 'Invalid credentials')
+            set.status = 400
+            return { message: 'Invalid credentials' }
         }
 
-        // 2. Проверяем пароль
-        const isMatch = await Bun.password.verify(body.password, user.password)
-
+        const isMatch = await bunPassword.verify(password, user.password)
         if (!isMatch) {
-            return error(401, 'Invalid credentials')
+            set.status = 400
+            return { message: 'Invalid credentials' }
         }
 
-        // 3. Генерируем токен
-        const token = await jwt.sign({
-            id: user.id,
-            email: user.email,
-            role: user.role
-        })
+        // В реальном проекте здесь нужно генерировать JWT.
+        // Для примера возвращаем просто токен-заглушку и объект юзера.
+        const token = 'fake-jwt-token-' + user.id
+
+        // Удаляем пароль из ответа
+        const { password: _, ...userWithoutPassword } = user
 
         return {
             success: true,
             token,
-            user: {
-                id: user.id,
-                email: user.email,
-                role: user.role
-            }
+            user: userWithoutPassword
         }
     }, {
         body: t.Object({
             email: t.String(),
             password: t.String()
-        }),
-        detail: { tags: ['Auth'] }
+        })
+    })
+
+    // Новый эндпоинт обновления профиля
+    .put('/profile', async ({ body, set }) => {
+        const { id, name, phone, idnp, address, deliveryMethod, avatarUrl } = body
+
+        try {
+            const updatedUser = await db.user.update({
+                where: { id: Number(id) },
+                data: {
+                    name,
+                    phone,
+                    idnp,
+                    address,
+                    deliveryMethod,
+                    avatarUrl
+                }
+            })
+
+            const { password: _, ...userWithoutPassword } = updatedUser
+            return { success: true, user: userWithoutPassword }
+
+        } catch (error) {
+            set.status = 400
+            return { success: false, message: "Could not update profile" }
+        }
+    }, {
+        body: t.Object({
+            id: t.Number(),
+            name: t.Optional(t.String()),
+            phone: t.Optional(t.String()),
+            idnp: t.Optional(t.String()),
+            address: t.Optional(t.String()),
+            deliveryMethod: t.Optional(t.Enum({ COURIER: 'COURIER', POST: 'POST' })),
+            avatarUrl: t.Optional(t.String())
+        })
     })

@@ -1,3 +1,4 @@
+// client/src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { api } from '../api';
 import type { User, AuthResponse } from '../types';
@@ -7,6 +8,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, password: string) => Promise<void>;
+    updateUser: (userData: Partial<User>) => Promise<void>; // Новая функция
     logout: () => void;
 }
 
@@ -29,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
 
-            // Сохраняем токен и юзера
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
@@ -53,6 +54,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    // Новая функция обновления профиля
+    const updateUser = async (userData: Partial<User>) => {
+        if (!user) return;
+        try {
+            const { data } = await api.put('/auth/profile', {
+                id: user.id,
+                ...userData
+            });
+
+            // Обновляем состояние и localStorage
+            const updatedUser = { ...user, ...data.user };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        } catch (error: any) {
+            console.error(error);
+            alert('Ошибка обновления профиля');
+            throw error;
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -60,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, updateUser, logout }}>
             {children}
         </AuthContext.Provider>
     );
