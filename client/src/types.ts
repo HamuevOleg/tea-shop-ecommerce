@@ -1,6 +1,3 @@
-// client/src/types.ts
-
-// --- Типы для авторизации (ЭТОГО НЕ ХВАТАЛО) ---
 export type Role = 'USER' | 'ADMIN';
 
 export interface User {
@@ -15,10 +12,9 @@ export interface AuthResponse {
     user: User;
 }
 
-// --- Типы для товаров ---
 export interface Product {
     id: number;
-    title: string;       // Обратите внимание: title, а не name (как на бэке)
+    title: string;
     price: number;
     description: string | null;
     category: {
@@ -27,4 +23,9 @@ export interface Product {
     };
     imageUrl?: string | null;
     stock?: number;
+}
+
+export interface CartItem {
+    product: Product;
+    quantity: number;
 }
