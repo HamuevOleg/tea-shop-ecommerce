@@ -1,21 +1,21 @@
 // client/src/components/Navbar.tsx
 import { useState } from 'react';
-import './Navbar.css';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import AdminPanel from './AdminPanel';
-import ProfileModal from './ProfileModal'; // <--- Добавляем импорт профиля
+import { ProfileModal } from './ProfileModal';
 
 interface NavbarProps {
-    onCartClick: () => void;
     onOpenAuth: () => void;
 }
 
-export const Navbar = ({ onCartClick, onOpenAuth }: NavbarProps) => {
+export const Navbar = ({ onOpenAuth }: NavbarProps) => {
     const { user, logout } = useAuth();
+    const { openCart } = useCart();
 
-    // Состояния для модальных окон
+    // States for modals
     const [isAdminOpen, setIsAdminOpen] = useState(false);
-    const [isProfileOpen, setIsProfileOpen] = useState(false); // <--- Состояние для профиля
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     return (
         <>
@@ -23,7 +23,7 @@ export const Navbar = ({ onCartClick, onOpenAuth }: NavbarProps) => {
                 <div className="navbar-logo">YunnanSoul</div>
                 <div className="navbar-links">
 
-                    {/* Кнопка Админки (Только для роли ADMIN) */}
+                    {/* Admin Panel Button (Only for ADMIN role) */}
                     {user?.role === 'ADMIN' && (
                         <button
                             className="nav-btn admin-btn"
@@ -34,13 +34,12 @@ export const Navbar = ({ onCartClick, onOpenAuth }: NavbarProps) => {
                         </button>
                     )}
 
-                    <button className="nav-btn" onClick={onCartClick}>
+                    <button className="nav-btn" onClick={openCart}>
                         Cart
                     </button>
 
                     {user ? (
                         <div className="user-menu">
-                            {/* Сделали email кнопкой для открытия профиля */}
                             <button
                                 className="nav-btn username-btn"
                                 onClick={() => setIsProfileOpen(true)}
@@ -59,20 +58,16 @@ export const Navbar = ({ onCartClick, onOpenAuth }: NavbarProps) => {
                 </div>
             </nav>
 
-            {/* --- Модальные окна --- */}
-
-            {/* Админка */}
+            {/* Modals */}
             <AdminPanel
                 isOpen={isAdminOpen}
                 onClose={() => setIsAdminOpen(false)}
             />
 
-            {/* Профиль пользователя */}
             <ProfileModal
-                user={user}
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
-                onLogout={logout}
+                onSuccess={() => setIsProfileOpen(false)}
             />
         </>
     );

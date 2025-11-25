@@ -1,6 +1,7 @@
+// client/src/components/AdminPanel.tsx
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Product, Category, Order } from '../types'; // Убедись, что Order есть в types.ts
+import { Product, Category, Order } from '../types';
 import './AdminPanel.css';
 
 interface AdminPanelProps {
@@ -11,18 +12,19 @@ interface AdminPanelProps {
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
 
-    // Данные
+    // Data
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
 
-    // Форма добавления товара
+    // New product form
     const [newProduct, setNewProduct] = useState({
         title: '',
         price: '',
         description: '',
         imageUrl: '',
-        categoryId: 1 // ID первой категории по умолчанию
+        categoryId: 1,
+        stock: 100
     });
 
     useEffect(() => {
@@ -40,50 +42,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 ]);
                 setProducts(prodRes.data);
                 setCategories(catRes.data);
+
+                // Set first category as default if available
+                if (catRes.data.length > 0 && newProduct.categoryId === 1) {
+                    setNewProduct(prev => ({ ...prev, categoryId: catRes.data[0].id }));
+                }
             } else {
-                const orderRes = await api.get('/orders'); // Бэкенд должен поддерживать GET /orders для админа
+                const orderRes = await api.get('/orders');
                 setOrders(orderRes.data);
             }
         } catch (error) {
-            console.error("Ошибка загрузки данных админки:", error);
+            console.error("Error loading admin data:", error);
+            alert('Failed to load data. Make sure you are logged in as admin.');
         }
     };
 
-    // --- Логика Товаров ---
+    // Product Logic
     const handleCreateProduct = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await api.post('/products', {
                 ...newProduct,
                 price: Number(newProduct.price),
-                categoryId: Number(newProduct.categoryId)
+                categoryId: Number(newProduct.categoryId),
+                stock: Number(newProduct.stock)
             });
-            // Сброс формы и обновление списка
-            setNewProduct({ title: '', price: '', description: '', imageUrl: '', categoryId: categories[0]?.id || 1 });
+
+            // Reset form and refresh list
+            setNewProduct({
+                title: '',
+                price: '',
+                description: '',
+                imageUrl: '',
+                categoryId: categories[0]?.id || 1,
+                stock: 100
+            });
             fetchData();
-        } catch (error) {
-            alert('Ошибка создания товара');
+            alert('Product created successfully!');
+        } catch (error: any) {
+            alert('Error creating product: ' + (error.response?.data?.message || 'Unknown error'));
             console.error(error);
         }
     };
 
     const handleDeleteProduct = async (id: number) => {
-        if (!confirm('Удалить этот товар?')) return;
+        if (!confirm('Delete this product?')) return;
         try {
             await api.delete(`/products/${id}`);
             fetchData();
+            alert('Product deleted successfully!');
         } catch (error) {
             console.error(error);
+            alert('Failed to delete product');
         }
     };
 
-    // --- Логика Заказов ---
+    // Order Logic
     const handleStatusChange = async (orderId: number, newStatus: string) => {
         try {
             await api.patch(`/orders/${orderId}`, { status: newStatus });
-            fetchData(); // Обновить список
+            fetchData();
+            alert('Order status updated!');
         } catch (error) {
-            console.error("Не удалось обновить статус", error);
+            console.error("Failed to update status", error);
+            alert('Failed to update order status');
         }
     };
 
@@ -102,32 +124,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                         className={activeTab === 'products' ? 'active' : ''}
                         onClick={() => setActiveTab('products')}
                     >
-                        Товары
+                        Products
                     </button>
                     <button
                         className={activeTab === 'orders' ? 'active' : ''}
                         onClick={() => setActiveTab('orders')}
                     >
-                        Заказы
+                        Orders
                     </button>
                 </div>
 
                 <div className="admin-content">
                     {activeTab === 'products' ? (
                         <div className="products-manager">
-                            {/* Форма добавления */}
+                            {/* Create Product Form */}
                             <form onSubmit={handleCreateProduct} className="add-product-form">
-                                <h3>Добавить новый чай</h3>
+                                <h3>Add New Tea</h3>
                                 <div className="form-row">
                                     <input
-                                        placeholder="Название"
+                                        placeholder="Product Name"
                                         value={newProduct.title}
                                         onChange={e => setNewProduct({...newProduct, title: e.target.value})}
                                         required
                                     />
                                     <input
-                                        placeholder="Цена"
+                                        placeholder="Price"
                                         type="number"
+                                        step="0.01"
                                         value={newProduct.price}
                                         onChange={e => setNewProduct({...newProduct, price: e.target.value})}
                                         required
@@ -141,47 +164,75 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                     <input
-                                        placeholder="Ссылка на картинку"
-                                        value={newProduct.imageUrl}
-                                        onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                                        placeholder="Stock Quantity"
+                                        type="number"
+                                        value={newProduct.stock}
+                                        onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})}
+                                        required
                                     />
                                 </div>
+                                <input
+                                    placeholder="Image URL"
+                                    value={newProduct.imageUrl}
+                                    onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                                />
                                 <textarea
-                                    placeholder="Описание"
+                                    placeholder="Description"
                                     value={newProduct.description}
                                     onChange={e => setNewProduct({...newProduct, description: e.target.value})}
                                 />
-                                <button type="submit" className="btn-add">Создать товар</button>
+                                <button type="submit" className="btn-add">Create Product</button>
                             </form>
 
-                            {/* Список товаров */}
+                            {/* Products List */}
                             <div className="products-list-admin">
+                                <h3 style={{ color: '#d4a373', marginBottom: '15px' }}>Existing Products</h3>
                                 {products.map(p => (
                                     <div key={p.id} className="admin-product-row">
-                                        <img src={p.imageUrl} alt="" className="admin-thumb"/>
-                                        <span>{p.title}</span>
-                                        <span>{p.price} ₽</span>
-                                        <button className="btn-delete" onClick={() => handleDeleteProduct(p.id)}>Удалить</button>
+                                        <img
+                                            src={p.imageUrl || 'https://via.placeholder.com/40'}
+                                            alt=""
+                                            className="admin-thumb"
+                                        />
+                                        <span style={{ flex: 1 }}>{p.title}</span>
+                                        <span style={{ marginRight: '10px' }}>${Number(p.price).toFixed(2)}</span>
+                                        <span style={{ marginRight: '10px', color: '#888' }}>Stock: {p.stock}</span>
+                                        <button className="btn-delete" onClick={() => handleDeleteProduct(p.id)}>
+                                            Delete
+                                        </button>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ) : (
                         <div className="orders-manager">
-                            {orders.length === 0 && <p>Заказов пока нет</p>}
+                            {orders.length === 0 && <p style={{ color: '#888' }}>No orders yet</p>}
                             {orders.map(order => (
                                 <div key={order.id} className="admin-order-card">
                                     <div className="order-header">
-                                        <span>Заказ #{order.id}</span>
-                                        <span className="order-user">User ID: {order.userId}</span>
-                                        <span className="order-date">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                        <span>Order #{order.id}</span>
+                                        <span className="order-user">
+                                            User: {order.user?.email || `ID: ${order.userId}`}
+                                        </span>
+                                        <span className="order-date">
+                                            {new Date(order.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
-                                    <div className="order-items">
-                                        {/* Если бэкенд возвращает items внутри order, раскомментируй: */}
-                                        {/* {order.items?.map(item => (
-                                            <div key={item.id}>{item.product.title} x {item.quantity}</div>
-                                        ))} */}
-                                        <div>Сумма: {order.totalPrice} ₽</div>
+                                    <div className="order-items" style={{ margin: '10px 0' }}>
+                                        {order.items && order.items.length > 0 ? (
+                                            <div>
+                                                {order.items.map(item => (
+                                                    <div key={item.id} style={{ fontSize: '0.9rem', color: '#aaa' }}>
+                                                        {item.product?.title || 'Unknown Product'} x {item.quantity}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div style={{ fontSize: '0.9rem', color: '#888' }}>No items</div>
+                                        )}
+                                        <div style={{ marginTop: '8px', fontWeight: 'bold' }}>
+                                            Total: ${Number(order.totalPrice).toFixed(2)}
+                                        </div>
                                     </div>
                                     <div className="order-actions">
                                         <select
@@ -189,10 +240,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                                             onChange={(e) => handleStatusChange(order.id, e.target.value)}
                                             className={`status-${order.status}`}
                                         >
-                                            <option value="PROCESSING">В обработке</option>
-                                            <option value="SHIPPED">Отправлен</option>
-                                            <option value="DELIVERED">Доставлен</option>
-                                            <option value="CANCELLED">Отменен</option>
+                                            <option value="PROCESSING">Processing</option>
+                                            <option value="SHIPPED">Shipped</option>
+                                            <option value="DELIVERED">Delivered</option>
+                                            <option value="CANCELLED">Cancelled</option>
                                         </select>
                                     </div>
                                 </div>
